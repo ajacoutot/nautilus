@@ -181,6 +181,7 @@ typedef struct
     OpKind op;
     guint64 last_report_time;
     int last_reported_files_left;
+    gboolean partial_progress;
 } TransferInfo;
 
 typedef struct
@@ -4066,7 +4067,8 @@ report_copy_progress (CopyMoveJob  *copy_job,
     }
 
     if (elapsed < SECONDS_NEEDED_FOR_RELIABLE_TRANSFER_RATE ||
-        transfer_rate == 0)
+        transfer_rate == 0 ||
+        !transfer_info->partial_progress)
     {
         if (source_info->num_files == 1)
         {
@@ -5073,6 +5075,12 @@ copy_file_progress_callback (goffset  current_num_bytes,
         report_copy_progress (pdata->job,
                               pdata->source_info,
                               pdata->transfer_info);
+    }
+
+    if (current_num_bytes != 0 &&
+        current_num_bytes != total_num_bytes)
+    {
+        pdata->transfer_info->partial_progress = TRUE;
     }
 }
 
